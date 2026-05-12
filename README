@@ -1,0 +1,28 @@
+cat > README.md << 'EOF'
+# ResumeAI v1
+
+ATS-optimized AI resume generator built using FastAPI, SQLite and Vanilla JS.
+
+## 🚀 Live Demo
+PASTE_ARTIFACT_LINK_HERE
+
+## 🛠 Tech Stack
+- FastAPI
+- SQLite
+- Python
+- Vanilla JS
+- HTML/CSS
+- Anthropic Claude API
+
+## 📁 Architecture
+
+- backend-api/ → FastAPI backend
+- frontend-demo/ → frontend source
+- artifact/ → standalone artifact demo
+
+## ⚠️ Note
+
+Main backend architecture supports AI-powered resume generation using configurable LLM providers.
+Artifact version included for lightweight demo usage.
+
+EOF

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResumeAI v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --surface: #0d1117;
+    --card: #111827;
+    --border: #1f2937;
+    --accent: #6366f1;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    right: -10%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(ellipse, rgba(6,182,212,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(6,8,16,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .nav-links { display: flex; gap: 8px; }
+
+  .nav-link {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .nav-link:hover { color: var(--text); background: var(--card); border-color: var(--border); }
+  .nav-link.active { color: var(--text); background: var(--card); border-color: var(--border); }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 100px 48px 60px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.3);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #a5b4fc;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 .line2 {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero p {
+    font-size: 18px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 540px;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  .hero-cta { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: var(--accent);
+    color: white;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary:hover { background: #5558e8; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.35); }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    background: var(--card);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Stats */
+  .stats-row {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto 80px;
+    padding: 0 48px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+
+  .stat-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 4px;
+    transition: all 0.3s;
+  }
+  .stat-label { font-size: 14px; color: var(--muted); }
+
+  /* Feature cards */
+  .section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto 80px;
+    padding: 0 48px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.25s;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,0.4); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+  .feature-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+
+  .feature-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .feature-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .feature-arrow {
+    position: absolute;
+    top: 32px; right: 32px;
+    font-size: 20px;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .feature-card:hover .feature-arrow { color: var(--accent); transform: translate(3px, -3px); }
+
+  /* Profile status */
+  .profile-status {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+    display: inline-block;
+    margin-right: 10px;
+    animation: pulse 2s infinite;
+  }
+  .status-dot.ready { background: var(--success); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Recent history preview */
+  .history-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .history-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .history-row:hover { border-color: var(--accent); }
+
+  .history-company { font-weight: 600; font-size: 15px; }
+  .history-meta { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  .score-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+  }
+  .score-high { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+  .score-mid { background: rgba(245,158,11,0.15); color: var(--accent3); border: 1px solid rgba(245,158,11,0.3); }
+  .score-low { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 14px;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 60px 20px 40px; }
+    .hero h1 { font-size: 40px; }
+    .stats-row, .section { padding: 0 20px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Resume<span>AI</span> <span style="font-size:11px;color:var(--muted);font-family:'DM Sans';font-weight:400">v2</span></div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link active">Dashboard</a>
+    <a href="profile.html" class="nav-link">Profile</a>
+    <a href="generate.html" class="nav-link">Generate</a>
+    <a href="history.html" class="nav-link">History</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">✦ AI-Powered · ATS Optimized</div>
+  <h1>One Profile.<br><span class="line2">Unlimited Resumes.</span></h1>
+  <p>Set up your profile once. Paste any job description. Get a perfectly tailored, ATS-ready resume in seconds.</p>
+  <div class="hero-cta">
+    <a href="generate.html" class="btn-primary">⚡ Generate Resume</a>
+    <a href="profile.html" class="btn-outline">👤 Setup Profile</a>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-number" id="statResumes">—</div>
+    <div class="stat-label">Resumes Generated</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statAvgScore">—</div>
+    <div class="stat-label">Average Match Score</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statSkills">—</div>
+    <div class="stat-label">Skills in Profile</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Quick Actions</div>
+  <div class="features-grid">
+
+    <a href="profile.html" class="feature-card">
+      <div class="feature-icon">👤</div>
+      <div class="feature-title">Setup Profile</div>
+      <div class="feature-desc">Add your skills, projects, experience and education. Do this once — all future resumes pull from here.</div>
+      <div class="feature-arrow">↗</div>
+    </a>
+
+    <a href="generate.html" class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Generate Resume</div>
+      <div class="feature-desc">Paste a job description. AI picks your most relevant data and writes a tailored ATS resume in seconds.</div>
+      <div class="feature-arrow">↗</div>
+    </a>
+
+    <a href="history.html" class="feature-card">
+      <div class="feature-icon">📂</div>
+      <div class="feature-title">Resume History</div>
+      <div class="feature-desc">Browse every resume you've generated. Each one saved with match score, company, and full resume text.</div>
+      <div class="feature-arrow">↗</div>
+    </a>
+
+    <div class="feature-card" style="cursor:default;" onclick="">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Skill Gap Analysis</div>
+      <div class="feature-desc">After generating, see exactly which skills are missing and get a prioritized learning roadmap for that role.</div>
+      <div class="feature-arrow" style="color:var(--border)">→</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Recent Resumes</div>
+  <div id="recentHistory">
+    <div class="empty-state">No resumes generated yet. <a href="generate.html" style="color:var(--accent)">Generate your first one →</a></div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000'
+
+async function loadDashboard() {
+  try {
+    // Load stats
+    const [historyRes, profileRes] = await Promise.all([
+      fetch(`${API}/history`),
+      fetch(`${API}/profile`)
+    ])
+    const history = await historyRes.json()
+    const profile = await profileRes.json()
+
+    // Stats
+    document.getElementById('statResumes').textContent = history.length
+    
+    const avgScore = history.length
+      ? Math.round(history.reduce((a, b) => a + b.match_score, 0) / history.length)
+      : 0
+    document.getElementById('statAvgScore').textContent = history.length ? avgScore + '%' : '—'
+    
+    const skillCount = Array.isArray(profile.skills) ? profile.skills.length : 0
+    document.getElementById('statSkills').textContent = skillCount || '—'
+
+    // Recent 3
+    const container = document.getElementById('recentHistory')
+    if (history.length === 0) {
+      container.innerHTML = `<div class="empty-state">No resumes generated yet. <a href="generate.html" style="color:var(--accent)">Generate your first one →</a></div>`
+      return
+    }
+
+    container.innerHTML = history.slice(0, 3).map(item => {
+      const scoreClass = item.match_score >= 70 ? 'score-high' : item.match_score >= 45 ? 'score-mid' : 'score-low'
+      const date = new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      return `
+        <a class="history-row" href="history.html#item-${item.id}">
+          <div>
+            <div class="history-company">${item.company_name || 'Unknown Company'} — ${item.job_title || 'Unknown Role'}</div>
+            <div class="history-meta">${date}</div>
+          </div>
+          <span class="score-badge ${scoreClass}">${item.match_score}%</span>
+        </a>
+      `
+    }).join('')
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+loadDashboard()
+</script>
+</body>
+</html>

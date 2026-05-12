@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>History — ResumeAI v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --card: #111827;
+    --border: #1f2937;
+    --accent: #6366f1;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(6,8,16,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-link { padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all 0.2s; border: 1px solid transparent; }
+  .nav-link:hover, .nav-link.active { color: var(--text); background: var(--card); border-color: var(--border); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: calc(100vh - 65px);
+  }
+
+  /* Left list panel */
+  .list-panel {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 24px 16px;
+  }
+
+  .list-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 8px;
+    margin-bottom: 20px;
+  }
+  .list-header h2 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .list-count { font-size: 13px; color: var(--muted); }
+
+  .history-item {
+    padding: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+    position: relative;
+  }
+  .history-item:hover { background: var(--card); border-color: var(--border); }
+  .history-item.active { background: var(--card); border-color: rgba(99,102,241,0.4); }
+
+  .item-company { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+  .item-role { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .item-footer { display: flex; align-items: center; justify-content: space-between; }
+  .item-date { font-size: 12px; color: var(--border); }
+
+  .score-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+  }
+  .score-high { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+  .score-mid  { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+  .score-low  { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+  .delete-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none;
+    color: var(--border); font-size: 16px;
+    cursor: pointer; padding: 4px 6px;
+    border-radius: 6px; transition: all 0.2s;
+    opacity: 0;
+  }
+  .history-item:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+  /* Detail panel */
+  .detail-panel {
+    overflow-y: auto;
+    padding: 40px 48px;
+  }
+
+  .empty-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .empty-detail .icon { font-size: 48px; opacity: 0.3; }
+
+  .detail-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 32px;
+    gap: 20px;
+  }
+
+  .detail-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .detail-subtitle { font-size: 15px; color: var(--muted); margin-top: 4px; }
+
+  .detail-score {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .section-label {
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 24px 0 12px;
+  }
+
+  .tags-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .tag-match { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+  .tag-miss  { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+  .suggestion-item {
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #fbbf24;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .resume-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 8px;
+  }
+
+  .resume-block-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .copy-btn {
+    padding: 8px 16px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc; border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .copy-btn:hover { background: rgba(99,102,241,0.2); }
+  .copy-btn.copied { background: rgba(16,185,129,0.1); color: #34d399; border-color: rgba(16,185,129,0.3); }
+
+  .resume-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px; line-height: 1.7;
+    color: #cbd5e1; white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 500px; overflow-y: auto;
+    padding: 16px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+  }
+
+  .empty-state-list {
+    text-align: center; padding: 48px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+  .empty-state-list a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    .list-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; }
+    .detail-panel { padding: 24px 20px; }
+    nav { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Resume<span>AI</span></div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">Dashboard</a>
+    <a href="profile.html" class="nav-link">Profile</a>
+    <a href="generate.html" class="nav-link">Generate</a>
+    <a href="history.html" class="nav-link active">History</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- Left list -->
+  <div class="list-panel">
+    <div class="list-header">
+      <h2>History</h2>
+      <span class="list-count" id="countLabel">Loading...</span>
+    </div>
+    <div id="historyList">
+      <div class="empty-state-list">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Right detail -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="empty-detail">
+      <div class="icon">📂</div>
+      <p>Select a resume from the left to view details.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000'
+let allHistory = []
+
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API}/history`)
+    allHistory = await res.json()
+    renderList()
+
+    // Auto-select from URL hash
+    const hash = window.location.hash
+    if (hash) {
+      const id = parseInt(hash.replace('#item-', ''))
+      const item = allHistory.find(i => i.id === id)
+      if (item) renderDetail(item)
+    }
+  } catch(e) {
+    document.getElementById('historyList').innerHTML = `<div class="empty-state-list">Failed to load. Is backend running?</div>`
+  }
+}
+
+function renderList() {
+  const container = document.getElementById('historyList')
+  document.getElementById('countLabel').textContent = `${allHistory.length} resume${allHistory.length !== 1 ? 's' : ''}`
+
+  if (allHistory.length === 0) {
+    container.innerHTML = `<div class="empty-state-list">No resumes yet.<br><a href="generate.html">Generate your first one →</a></div>`
+    return
+  }
+
+  container.innerHTML = allHistory.map(item => {
+    const scoreClass = item.match_score >= 70 ? 'score-high' : item.match_score >= 45 ? 'score-mid' : 'score-low'
+    const date = new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    return `
+      <div class="history-item" id="list-item-${item.id}" onclick="selectItem(${item.id})">
+        <button class="delete-btn" onclick="deleteItem(event, ${item.id})">🗑</button>
+        <div class="item-company">${item.company_name || 'Unknown Company'}</div>
+        <div class="item-role">${item.job_title || 'Unknown Role'}</div>
+        <div class="item-footer">
+          <span class="item-date">${date}</span>
+          <span class="score-badge ${scoreClass}">${item.match_score}%</span>
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
+function selectItem(id) {
+  const item = allHistory.find(i => i.id === id)
+  if (!item) return
+
+  // Highlight active
+  document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'))
+  document.getElementById(`list-item-${id}`)?.classList.add('active')
+
+  renderDetail(item)
+}
+
+function renderDetail(item) {
+  const scoreColor = item.match_score >= 70 ? '#10b981' : item.match_score >= 45 ? '#f59e0b' : '#ef4444'
+  const date = new Date(item.created_at).toLocaleString('en-IN', { 
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+  })
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-header">
+      <div>
+        <div class="detail-title">${item.company_name || 'Unknown Company'}</div>
+        <div class="detail-subtitle">${item.job_title || 'Unknown Role'} · ${date}</div>
+      </div>
+      <div class="detail-score" style="color:${scoreColor}">${item.match_score}%</div>
+    </div>
+
+    <div class="section-label">✅ Matched Skills</div>
+    <div class="tags-row">
+      ${(item.matched_skills || []).map(s => `<span class="tag tag-match">✓ ${s}</span>`).join('') || '<span style="color:var(--muted);font-size:13px">None recorded</span>'}
+    </div>
+
+    <div class="section-label">❌ Missing Skills</div>
+    <div class="tags-row">
+      ${(item.missing_skills || []).map(s => `<span class="tag tag-miss">✗ ${s}</span>`).join('') || '<span style="color:var(--muted);font-size:13px">None recorded</span>'}
+    </div>
+
+    <div class="section-label">💡 Learning Suggestions</div>
+    ${(item.suggestions || []).map(s => `<div class="suggestion-item">→ ${s}</div>`).join('') || '<p style="color:var(--muted);font-size:13px">None recorded</p>'}
+
+    <div class="section-label">📄 Generated Resume</div>
+    <div class="resume-block">
+      <div class="resume-block-header">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">Resume Text</span>
+        <button class="copy-btn" id="detailCopyBtn" onclick="copyDetailResume()">📋 Copy</button>
+      </div>
+      <div class="resume-text" id="detailResumeText">${escapeHTML(item.generated_resume || '')}</div>
+    </div>
+  `
+
+  // Store current for copy
+  window._currentResume = item.generated_resume
+}
+
+function copyDetailResume() {
+  navigator.clipboard.writeText(window._currentResume || '')
+  const btn = document.getElementById('detailCopyBtn')
+  btn.textContent = '✅ Copied!'
+  btn.classList.add('copied')
+  setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied') }, 2000)
+}
+
+async function deleteItem(e, id) {
+  e.stopPropagation()
+  if (!confirm('Delete this resume from history?')) return
+  try {
+    await fetch(`${API}/history/${id}`, { method: 'DELETE' })
+    allHistory = allHistory.filter(i => i.id !== id)
+    renderList()
+    document.getElementById('detailPanel').innerHTML = `
+      <div class="empty-detail">
+        <div class="icon">🗑️</div>
+        <p>Resume deleted.</p>
+      </div>
+    `
+  } catch(e) {
+    alert('Delete failed.')
+  }
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+}
+
+loadHistory()
+</script>
+</body>
+</html>

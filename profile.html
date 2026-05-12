@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — ResumeAI v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --surface: #0d1117;
+    --card: #111827;
+    --border: #1f2937;
+    --accent: #6366f1;
+    --accent2: #06b6d4;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(6,8,16,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-link { padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--muted); text-decoration: none; transition: all 0.2s; border: 1px solid transparent; }
+  .nav-link:hover, .nav-link.active { color: var(--text); background: var(--card); border-color: var(--border); }
+
+  .container { max-width: 800px; margin: 0 auto; padding: 48px 24px; }
+
+  .page-header { margin-bottom: 40px; }
+  .page-header h1 { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+  .page-header p { font-size: 15px; color: var(--muted); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+  input, textarea {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); background: rgba(99,102,241,0.04); }
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.6; }
+
+  /* Skills tags */
+  .skills-input-area {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 60px;
+    cursor: text;
+    transition: border-color 0.2s;
+  }
+  .skills-input-area:focus-within { border-color: var(--accent); }
+  .skills-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .skill-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+  .skill-tag .remove {
+    cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1;
+    transition: color 0.2s;
+  }
+  .skill-tag .remove:hover { color: var(--danger); }
+  .skills-type-input {
+    background: none; border: none; outline: none; color: var(--text);
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+    width: 200px; padding: 4px;
+  }
+  .skills-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* Dynamic list items */
+  .dynamic-list { display: flex; flex-direction: column; gap: 16px; }
+  
+  .list-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+  }
+
+  .remove-item {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 18px; transition: color 0.2s;
+    padding: 4px 8px; border-radius: 6px;
+  }
+  .remove-item:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+
+  .add-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #a5b4fc;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    margin-top: 16px;
+  }
+  .add-btn:hover { background: rgba(99,102,241,0.2); border-color: var(--accent); }
+
+  .save-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .save-btn:hover { background: #5558e8; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.35); }
+  .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    animation: slideIn 0.3s ease;
+  }
+  .toast.show { display: flex; }
+  .toast.success { border-color: rgba(16,185,129,0.4); color: var(--success); }
+  .toast.error { border-color: rgba(239,68,68,0.4); color: var(--danger); }
+
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  @media (max-width: 640px) {
+    nav { padding: 16px 20px; }
+    .container { padding: 32px 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Resume<span>AI</span></div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link">Dashboard</a>
+    <a href="profile.html" class="nav-link active">Profile</a>
+    <a href="generate.html" class="nav-link">Generate</a>
+    <a href="history.html" class="nav-link">History</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>Your Profile</h1>
+    <p>Set this up once. Every resume you generate pulls data from here.</p>
+  </div>
+
+  <!-- Personal Details -->
+  <div class="card">
+    <div class="card-title">👤 Personal Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="name" placeholder="Neha Mhatre">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="neha@example.com">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="phone" placeholder="+91 9999999999">
+      </div>
+      <div class="form-group">
+        <label>LinkedIn URL</label>
+        <input type="text" id="linkedin" placeholder="linkedin.com/in/neha-mhatre">
+      </div>
+      <div class="form-group">
+        <label>GitHub URL</label>
+        <input type="text" id="github" placeholder="github.com/neuuu">
+      </div>
+      <div class="form-group">
+        <label>Portfolio URL</label>
+        <input type="text" id="portfolio" placeholder="neuuu.dev">
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div class="card">
+    <div class="card-title">🛠️ Skills</div>
+    <div class="skills-input-area" onclick="document.getElementById('skillInput').focus()">
+      <div class="skills-tags" id="skillsTags"></div>
+      <input type="text" id="skillInput" class="skills-type-input" placeholder="Type a skill and press Enter...">
+    </div>
+    <div class="skills-hint">Press Enter or comma after each skill. Add everything — technical + tools + soft skills.</div>
+  </div>
+
+  <!-- Projects -->
+  <div class="card">
+    <div class="card-title">🚀 Projects</div>
+    <div class="dynamic-list" id="projectsList"></div>
+    <button class="add-btn" onclick="addProject()">+ Add Project</button>
+  </div>
+
+  <!-- Education -->
+  <div class="card">
+    <div class="card-title">🎓 Education</div>
+    <div class="dynamic-list" id="educationList"></div>
+    <button class="add-btn" onclick="addEducation()">+ Add Education</button>
+  </div>
+
+  <!-- Experience -->
+  <div class="card">
+    <div class="card-title">💼 Experience & Internships</div>
+    <div class="dynamic-list" id="experienceList"></div>
+    <button class="add-btn" onclick="addExperience()">+ Add Experience</button>
+  </div>
+
+  <!-- Certifications -->
+  <div class="card">
+    <div class="card-title">📜 Certifications</div>
+    <div class="dynamic-list" id="certsList"></div>
+    <button class="add-btn" onclick="addCert()">+ Add Certification</button>
+  </div>
+
+  <button class="save-btn" id="saveBtn" onclick="saveProfile()">💾 Save Profile</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:8000'
+let skills = []
+
+// ── Skills tag input ──
+document.getElementById('skillInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    const val = e.target.value.trim().replace(/,$/, '')
+    if (val && !skills.includes(val)) {
+      skills.push(val)
+      renderSkills()
+    }
+    e.target.value = ''
+  }
+})
+
+function renderSkills() {
+  document.getElementById('skillsTags').innerHTML = skills.map((s, i) => `
+    <span class="skill-tag">${s} <span class="remove" onclick="removeSkill(${i})">×</span></span>
+  `).join('')
+}
+
+function removeSkill(i) {
+  skills.splice(i, 1)
+  renderSkills()
+}
+
+// ── Dynamic list helpers ──
+function addProject() {
+  const list = document.getElementById('projectsList')
+  const id = Date.now()
+  const div = document.createElement('div')
+  div.className = 'list-item'
+  div.id = `proj-${id}`
+  div.innerHTML = `
+    <button class="remove-item" onclick="document.getElementById('proj-${id}').remove()">×</button>
+    <div class="form-grid">
+      <div class="form-group"><label>Project Title</label><input type="text" placeholder="ResumeAI v2" class="proj-title"></div>
+      <div class="form-group"><label>Tech Stack</label><input type="text" placeholder="Python, FastAPI, React" class="proj-tech"></div>
+      <div class="form-group full"><label>Description</label><textarea rows="2" placeholder="What it does and how you built it" class="proj-desc"></textarea></div>
+      <div class="form-group full"><label>Impact / Results</label><input type="text" placeholder="Reduced resume time by 80%, 100+ users" class="proj-impact"></div>
+    </div>
+  `
+  list.appendChild(div)
+}
+
+function addEducation() {
+  const list = document.getElementById('educationList')
+  const id = Date.now()
+  const div = document.createElement('div')
+  div.className = 'list-item'
+  div.id = `edu-${id}`
+  div.innerHTML = `
+    <button class="remove-item" onclick="document.getElementById('edu-${id}').remove()">×</button>
+    <div class="form-grid">
+      <div class="form-group"><label>Degree / Course</label><input type="text" placeholder="B.E. Computer Engineering" class="edu-degree"></div>
+      <div class="form-group"><label>Institution</label><input type="text" placeholder="Pune University" class="edu-inst"></div>
+      <div class="form-group"><label>Year</label><input type="text" placeholder="2022 – 2026" class="edu-year"></div>
+      <div class="form-group"><label>Grade / CGPA</label><input type="text" placeholder="8.5 CGPA" class="edu-grade"></div>
+    </div>
+  `
+  list.appendChild(div)
+}
+
+function addExperience() {
+  const list = document.getElementById('experienceList')
+  const id = Date.now()
+  const div = document.createElement('div')
+  div.className = 'list-item'
+  div.id = `exp-${id}`
+  div.innerHTML = `
+    <button class="remove-item" onclick="document.getElementById('exp-${id}').remove()">×</button>
+    <div class="form-grid">
+      <div class="form-group"><label>Role / Position</label><input type="text" placeholder="Backend Intern" class="exp-role"></div>
+      <div class="form-group"><label>Company</label><input type="text" placeholder="TechCorp Pvt Ltd" class="exp-company"></div>
+      <div class="form-group"><label>Duration</label><input type="text" placeholder="Jun 2024 – Aug 2024" class="exp-duration"></div>
+      <div class="form-group full"><label>What you did</label><textarea rows="2" placeholder="Describe your responsibilities and impact" class="exp-desc"></textarea></div>
+    </div>
+  `
+  list.appendChild(div)
+}
+
+function addCert() {
+  const list = document.getElementById('certsList')
+  const id = Date.now()
+  const div = document.createElement('div')
+  div.className = 'list-item'
+  div.id = `cert-${id}`
+  div.innerHTML = `
+    <button class="remove-item" onclick="document.getElementById('cert-${id}').remove()">×</button>
+    <div class="form-grid">
+      <div class="form-group"><label>Certification Name</label><input type="text" placeholder="AWS Cloud Practitioner" class="cert-name"></div>
+      <div class="form-group"><label>Issuer</label><input type="text" placeholder="Amazon Web Services" class="cert-issuer"></div>
+      <div class="form-group"><label>Year</label><input type="text" placeholder="2024" class="cert-year"></div>
+    </div>
+  `
+  list.appendChild(div)
+}
+
+// ── Collect form data ──
+function collectProfile() {
+  const projects = [...document.querySelectorAll('#projectsList .list-item')].map(el => ({
+    title: el.querySelector('.proj-title')?.value || '',
+    description: el.querySelector('.proj-desc')?.value || '',
+    tech_stack: el.querySelector('.proj-tech')?.value || '',
+    impact: el.querySelector('.proj-impact')?.value || ''
+  }))
+
+  const education = [...document.querySelectorAll('#educationList .list-item')].map(el => ({
+    degree: el.querySelector('.edu-degree')?.value || '',
+    institution: el.querySelector('.edu-inst')?.value || '',
+    year: el.querySelector('.edu-year')?.value || '',
+    grade: el.querySelector('.edu-grade')?.value || ''
+  }))
+
+  const experience = [...document.querySelectorAll('#experienceList .list-item')].map(el => ({
+    role: el.querySelector('.exp-role')?.value || '',
+    company: el.querySelector('.exp-company')?.value || '',
+    duration: el.querySelector('.exp-duration')?.value || '',
+    description: el.querySelector('.exp-desc')?.value || ''
+  }))
+
+  const certifications = [...document.querySelectorAll('#certsList .list-item')].map(el => ({
+    name: el.querySelector('.cert-name')?.value || '',
+    issuer: el.querySelector('.cert-issuer')?.value || '',
+    year: el.querySelector('.cert-year')?.value || ''
+  }))
+
+  return {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    phone: document.getElementById('phone').value,
+    linkedin: document.getElementById('linkedin').value,
+    github: document.getElementById('github').value,
+    portfolio: document.getElementById('portfolio').value,
+    skills,
+    projects,
+    education,
+    experience,
+    certifications
+  }
+}
+
+// ── Load existing profile ──
+async function loadProfile() {
+  try {
+    const res = await fetch(`${API}/profile`)
+    const p = await res.json()
+
+    document.getElementById('name').value = p.name || ''
+    document.getElementById('email').value = p.email || ''
+    document.getElementById('phone').value = p.phone || ''
+    document.getElementById('linkedin').value = p.linkedin || ''
+    document.getElementById('github').value = p.github || ''
+    document.getElementById('portfolio').value = p.portfolio || ''
+
+    skills = Array.isArray(p.skills) ? p.skills : []
+    renderSkills()
+
+    ;(p.projects || []).forEach(() => addProject())
+    const projEls = document.querySelectorAll('#projectsList .list-item')
+    ;(p.projects || []).forEach((proj, i) => {
+      if (!projEls[i]) return
+      projEls[i].querySelector('.proj-title').value = proj.title || ''
+      projEls[i].querySelector('.proj-tech').value = proj.tech_stack || ''
+      projEls[i].querySelector('.proj-desc').value = proj.description || ''
+      projEls[i].querySelector('.proj-impact').value = proj.impact || ''
+    })
+
+    ;(p.education || []).forEach(() => addEducation())
+    const eduEls = document.querySelectorAll('#educationList .list-item')
+    ;(p.education || []).forEach((edu, i) => {
+      if (!eduEls[i]) return
+      eduEls[i].querySelector('.edu-degree').value = edu.degree || ''
+      eduEls[i].querySelector('.edu-inst').value = edu.institution || ''
+      eduEls[i].querySelector('.edu-year').value = edu.year || ''
+      eduEls[i].querySelector('.edu-grade').value = edu.grade || ''
+    })
+
+    ;(p.experience || []).forEach(() => addExperience())
+    const expEls = document.querySelectorAll('#experienceList .list-item')
+    ;(p.experience || []).forEach((exp, i) => {
+      if (!expEls[i]) return
+      expEls[i].querySelector('.exp-role').value = exp.role || ''
+      expEls[i].querySelector('.exp-company').value = exp.company || ''
+      expEls[i].querySelector('.exp-duration').value = exp.duration || ''
+      expEls[i].querySelector('.exp-desc').value = exp.description || ''
+    })
+
+    ;(p.certifications || []).forEach(() => addCert())
+    const certEls = document.querySelectorAll('#certsList .list-item')
+    ;(p.certifications || []).forEach((cert, i) => {
+      if (!certEls[i]) return
+      certEls[i].querySelector('.cert-name').value = cert.name || ''
+      certEls[i].querySelector('.cert-issuer').value = cert.issuer || ''
+      certEls[i].querySelector('.cert-year').value = cert.year || ''
+    })
+
+  } catch (e) {
+    console.error('Failed to load profile', e)
+  }
+}
+
+// ── Save profile ──
+async function saveProfile() {
+  const btn = document.getElementById('saveBtn')
+  btn.disabled = true
+  btn.textContent = 'Saving...'
+
+  try {
+    const profile = collectProfile()
+    const res = await fetch(`${API}/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    })
+    if (!res.ok) throw new Error(await res.text())
+    showToast('✅ Profile saved successfully!', 'success')
+  } catch (e) {
+    showToast('❌ Failed to save. Is backend running?', 'error')
+    console.error(e)
+  }
+
+  btn.disabled = false
+  btn.textContent = '💾 Save Profile'
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = `toast show ${type}`
+  setTimeout(() => t.className = 'toast', 3000)
+}
+
+loadProfile()
+</script>
+</body>
+</html>
