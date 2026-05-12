@@ -1,28 +1,28 @@
-cat > README.md << 'EOF'
-# ResumeAI v1
+# 1. Clone the repo
+git clone https://github.com/neuuu116/ResumeAI-v1.git
+cd ResumeAI-v1
 
-ATS-optimized AI resume generator built using FastAPI, SQLite and Vanilla JS.
+# 2. Setup virtual environment
+cd backend-api
+python3 -m venv venv
+source venv/bin/activate
 
-## 🚀 Live Demo
-PASTE_ARTIFACT_LINK_HERE
+# 3. Install dependencies
+pip install -r requirements.txt
 
-## 🛠 Tech Stack
-- FastAPI
-- SQLite
-- Python
-- Vanilla JS
-- HTML/CSS
-- Anthropic Claude API
+# 4. Add your API key
+echo "ANTHROPIC_API_KEY=your_key_here" > .env
 
-## 📁 Architecture
+# 5. Run the server
+uvicorn main:app --reload
+```
 
-- backend-api/ → FastAPI backend
-- frontend-demo/ → frontend source
-- artifact/ → standalone artifact demo
+## 🔮 Roadmap
+- [ ] Multi-user support
+- [ ] EC2 deployment
+- [ ] PDF export
+- [ ] Cover letter generation
 
-## ⚠️ Note
-
-Main backend architecture supports AI-powered resume generation using configurable LLM providers.
-Artifact version included for lightweight demo usage.
-
-EOF
+## 👩‍💻 Built by
+Neha Mhatre — B.E. Computer Engineering, BVCOEW Pune | B.S. Data Science, IIT Madras  
+[GitHub](https://github.com/neuuu116) · [LinkedIn](https://linkedin.com/in/neha-mhatre-693055336)
