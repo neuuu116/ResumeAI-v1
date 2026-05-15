@@ -1,20 +1,14 @@
-import anthropic
+from groq import Groq
 import json
 import os
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def generate_resume_with_ai(profile: dict, job_description: str, company_name: str, job_title: str) -> dict:
-    """
-    Core AI function:
-    1. Analyzes JD against profile
-    2. Picks ONLY relevant skills/projects
-    3. Generates ATS-optimized resume
-    4. Returns match score + missing skills + suggestions
-    """
 
     profile_summary = f"""
 CANDIDATE PROFILE:
@@ -33,14 +27,14 @@ ALL PROJECTS:
 EDUCATION:
 {json.dumps(profile.get('education', []), indent=2)}
 
-WORK EXPERIENCE / INTERNSHIPS:
+WORK EXPERIENCE:
 {json.dumps(profile.get('experience', []), indent=2)}
 
 CERTIFICATIONS:
 {json.dumps(profile.get('certifications', []), indent=2)}
 """
 
-    prompt = f"""You are an expert ATS resume writer and career coach.
+    prompt = f"""You are a professional ATS resume writer. Your job is to write a complete, job-specific resume — not a summary, not an overview. A FULL RESUME.
 
 {profile_summary}
 
@@ -49,60 +43,80 @@ Company: {company_name}
 Role: {job_title}
 {job_description}
 
-YOUR TASK:
-1. Analyze the job description carefully — extract key required skills, technologies, and responsibilities.
-2. From the candidate's profile, SELECT ONLY the most relevant skills, projects, and experience for THIS specific job.
-3. Do NOT include everything. Be selective. Quality over quantity.
-4. If skills are limited, smartly highlight relevant projects, coursework, and certifications instead.
-5. Generate a complete ATS-optimized resume tailored to this specific job.
-6. Calculate a match score (0-100) based on how well the profile fits the JD.
-7. List matched skills, missing skills, and specific learning suggestions.
+STRICT RULES — FOLLOW EVERY SINGLE ONE:
 
-RESUME FORMAT RULES:
-- Use clean plain text format with clear sections
-- Use standard section headers: SUMMARY, SKILLS, EXPERIENCE, PROJECTS, EDUCATION, CERTIFICATIONS
-- Use bullet points starting with strong action verbs (Developed, Built, Implemented, Optimized, Led, Designed)
-- Quantify achievements wherever possible (even if estimated)
-- Incorporate keywords from the JD naturally
-- Keep it to 1 page equivalent
-- ATS-friendly: no tables, no columns, no special characters
+BANNED WORDS — never use these, ever:
+- "highly motivated", "detail-oriented", "passionate", "dynamic", "hardworking"
+- "team player", "fast learner", "go-getter", "results-driven"
+- Any generic adjective that does not show proof
 
-Return ONLY a JSON object in this exact format:
-{{
-    "generated_resume": "Full resume text here with \\n for line breaks",
-    "match_score": 72,
-    "matched_skills": ["Python", "SQL", "REST APIs"],
-    "missing_skills": ["Kubernetes", "Terraform", "AWS Lambda"],
-    "suggestions": [
-        "Learn Docker and container orchestration basics (1-2 weeks)",
-        "Build a project using AWS services — start with S3 and Lambda",
-        "Add a system design project to showcase backend architecture skills"
-    ]
-}}
+RESUME STRUCTURE — write ALL sections:
 
-The generated_resume must be a complete, properly formatted resume ready to copy-paste.
-Return ONLY the JSON. No explanation. No markdown. No preamble."""
+1. CONTACT
+   Full name, email, phone, LinkedIn, GitHub on separate lines
 
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+2. SUMMARY (3 lines max)
+   - Line 1: Your role + years/level + top 2-3 specific technologies
+   - Line 2: One specific achievement with a number
+   - Line 3: What you bring to THIS specific company and role
+   - NO cliche words. Only facts and technologies.
+
+3. SKILLS
+   - Group by category: Languages | Frameworks | Databases | Tools | Cloud
+   - Only include skills relevant to THIS job description
+   - Format: Languages: Python, C++ | Frameworks: FastAPI, Flask | Databases: SQLite, MySQL
+
+4. PROJECTS (most important section — treat as experience)
+   - For EACH project write 3-4 bullet points
+   - Bullet format: [Action verb] + [what exactly you built] + [technology used] + [measurable result]
+   - Example: "Engineered a FastAPI backend with 6 REST endpoints handling resume generation, reducing manual effort by 80%"
+   - NEVER write one-line project descriptions
+   - Include tech stack, architecture decisions, and impact
+
+5. EDUCATION
+   - Degree, Institution, Year, CGPA
+   - Include ALL institutions (college + IIT Madras if present)
+   - Include relevant coursework if it matches the JD
+
+6. CERTIFICATIONS
+   - Name, Issuer, Year
+   - Only include certs relevant to the job
+
+7. EXPERIENCE (if exists in profile)
+   - Same bullet format as projects
+   - If no formal experience, SKIP this section — do NOT write "EXPERIENCE" with nothing under it
+
+FORMATTING RULES:
+- Use plain text only
+- Section headers in CAPS
+- Bullets start with strong past-tense action verbs: Built, Engineered, Designed, Implemented, Optimized, Developed, Architected, Automated
+- Every bullet must have a technology name and a result
+- No tables, no columns, no special characters
+- Total length: 400-600 words
+
+RETURN FORMAT:
+Return ONLY this JSON. No explanation before or after. No markdown fences.
+{{"generated_resume": "full resume here, use \\n for line breaks", "match_score": 75, "matched_skills": ["Python", "FastAPI"], "missing_skills": ["Docker"], "suggestions": ["Learn Docker basics in 2 weeks", "Build one AWS Lambda project"]}}"""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
         max_tokens=4000,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
+        temperature=0.3
     )
 
-    raw = message.content[0].text.strip()
+    raw = response.choices[0].message.content.strip()
 
-    # Strip markdown code fences if present
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
+    if "```json" in raw:
+        raw = raw.split("```json")[1].split("```")[0]
+    elif "```" in raw:
+        raw = raw.split("```")[1].split("```")[0]
+
+    raw = re.sub(r'[\x00-\x1f\x7f-\x9f]', ' ', raw)
     raw = raw.strip()
 
     result = json.loads(raw)
 
-    # Validate required keys
     required = ["generated_resume", "match_score", "matched_skills", "missing_skills", "suggestions"]
     for key in required:
         if key not in result:
